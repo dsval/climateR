@@ -19,7 +19,7 @@
 #' @param no_data a no_date value
 #' @param scale_factor a scale factors for returned data
 #' @return a list object of raster*
-#' @importFrom foreach `%dopar%` foreach
+#' @importFrom foreach `%do%` foreach
 #' @importFrom parallel detectCores makeCluster
 #' @importFrom doParallel registerDoParallel
 #' @importFrom RNetCDF open.nc var.get.nc
@@ -31,12 +31,13 @@ fast.download = function(urls, params, names, g, date.names, dataset, fun = 'r',
 
   stopifnot(identical(length(urls), NROW(params)))
 
-  `%dopar%` <- foreach::`%dopar%`
-  no_cores  <- parallel::detectCores() - 1
-  doParallel::registerDoParallel(no_cores)
+  #`%dopar%` <- foreach::`%dopar%`
+  # no_cores  <- parallel::detectCores() - 1
+  # doParallel::registerDoParallel(no_cores)
+  `%do%` <- foreach::`%dopar%`
 
   if(g$type == 'point'){
-    var = foreach::foreach(i = 1:length(urls), .combine = 'c') %dopar% { 
+    var = foreach::foreach(i = 1:length(urls), .combine = 'c') %do% { 
       tryCatch({
         RNetCDF::open.nc(urls[i]) %>% RNetCDF::var.get.nc(params[i], unpack = TRUE) 
       }, error = function(e){
@@ -80,9 +81,9 @@ fast.download = function(urls, params, names, g, date.names, dataset, fun = 'r',
     time = length(date.names)
     
     if(time > 1){
-      if(is.na(dim(v)[3])){
-        dim(v) = round(c(g$rows, g$cols, time))
-      }
+      # if(is.null(dim(v)[3])){
+      #   dim(v) = round(c(g$rows, g$cols, time))
+      # }
 
       var2 = array(rep(0, length(v)), dim = round(c(g$rows, g$cols, time)))
       for(j in 1:dim(var2)[3]){ var2[,,j] = .orient(v[,,j], fun = fun) }
